@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Draw a Vector</title>
+  </head>
+  <body onload="main()">
+    <canvas id="example" width="400" height="400">
+      Please use a browser that supports "canvas".
+    </canvas>
+    <div>
+      <label for="V1_x">v1: x</label>
+      <input type="number" id="V1_x" />
+      <label for="V1_y">y</label>
+      <input type="number" id="V1_y" />
+
+      <br />
+      <label for="V2_x">v2: x</label>
+      <input type="number" id="V2_x" />
+      <label for="V2_y">y</label>
+      <input type="number" id="V2_y" />
+      <br />
+
+      <button id="draw">Draw</button>
+
+      <br> <br/>
+      <br>
+      <label for=Operation>Operation</label>
+      <select id="selector" name="select">
+        <option value="add">Addition</option>
+        <option value="sub">Subtraction</option>
+        <option value="div">Divide</option>
+        <option value="mul">Multiply</option>
+        <option value="mag">Magnitude</option>
+        <option value="nor">Normalize</option>
+        <option value="ang">Angle Between</option>
+        <option value="are">Area</option>
+      </select>
+      <label for="scalar">Scalar:</label>
+      <input type="number" id="scalar"></input>
+     </br>
+      <button id="drawScalar">Draw</button>
+      
+    </div>
+    <script src="../lib/cuon-matrix-cse160.js"></script>
+    <script src="asg0.js"></script>
+  </body>
+</html>
