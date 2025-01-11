@@ -74,16 +74,26 @@ let g_selectedColor = [1.0, 1.0, 1.0, 1.0];
 let g_selectedSize = 5;
 let g_selectedType = POINT;
 let g_segments = 1;
+var g_shapesList = [];
 
 function addActionsForHtmlUI() {
     document.getElementById('green').onclick = function () { g_selectedColor = [0.0, 1.0, 0.0, 1.0]; }
     document.getElementById('red').onclick = function () { g_selectedColor = [1.0, 0.0, 0.0, 1.0]; }
-    document.getElementById('clearButton').onclick = function () { g_shapesList = []; renderAllShapes(); }
+    document.getElementById('clearButton').onclick = function () {
+        g_shapesList = [];
+        renderAllShapes();
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gameAct = false; 
+        canvas.onmousemove = function (ev) { if (ev.buttons === 1) { click(ev) } };
+    }
+
 
     document.getElementById('pointButton').onclick = function () { g_selectedType = POINT };
     document.getElementById('triButton').onclick = function () { g_selectedType = TRIANGLE };
     document.getElementById('circleButton').onclick = function () { g_selectedType = CIRCLE };
     document.getElementById('catButton').onclick = function () { cat(); };
+    document.getElementById('snakeButton').onclick = function () { snakeGame(); };
 
 
     document.getElementById('redSlide').addEventListener('mouseup', function () { g_selectedColor[0] = this.value / 100 });
@@ -213,7 +223,7 @@ function main() {
 
 
 
-var g_shapesList = [];
+
 
 // var g_points = [];  // The array for the position of a mouse press
 // var g_colors = [];  // The array to store the color of a point
@@ -280,3 +290,95 @@ function sendTextToHTML(text, htmlID) {
     htmlElm.innerHTML = text;
 }
 
+let generatedShapesCopy = [];  
+function snakeGame() {
+    gameAct = true;
+
+    g_shapesList = [];
+    generatedShapesCopy = [];  
+    gl.clearColor(0.0, 0.0, 0.0, 1.0); 
+    gl.clear(gl.COLOR_BUFFER_BIT); 
+
+    for (let i = 0; i < 10; i++) {
+        let shapeType = Math.floor(Math.random() * 3);
+        let shape;
+
+        if (shapeType === POINT) {
+            shape = new Point();
+        } else if (shapeType === TRIANGLE) {
+            shape = new Triangle();
+        } else if (shapeType === CIRCLE) {
+            shape = new Circle();
+            shape.segments = Math.floor(Math.random() * 10) + 3; 
+        }
+
+        shape.position = [Math.random() * 2 - 1, Math.random() * 2 - 1]; 
+        shape.color = [Math.random(), Math.random(), Math.random(), 1.0];
+        shape.size = Math.random() * 20 + 5; 
+
+        g_shapesList.push(shape);
+        generatedShapesCopy.push(shape); 
+    }
+
+    renderAllShapes(); 
+
+    canvas.onmousemove = function (ev) { if (ev.buttons == 1) { handleSnakeDrawing(ev); }};
+}
+
+function handleSnakeDrawing(ev) {
+    if (!gameAct) return; 
+
+    let [x, y] = convertCoordinatesEventToGl(ev);
+
+    g_shapesList = g_shapesList.filter(shape => {
+        if (checkCollision(shape, x, y)) { return false; }
+        return true; 
+    });
+
+    if (genShapes()) { //all removed
+        console.log("win");
+        gameAct = false;  
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        canvas.onmousemove = function (ev) { if (ev.buttons == 1) { click(ev); } };
+    }
+
+    let shape = new Point();
+    shape.position = [x, y]; 
+    shape.color = g_selectedColor.slice();
+    shape.size = g_selectedSize; 
+    g_shapesList.push(shape); 
+    renderAllShapes();
+}
+
+
+function checkCollision(shape, x, y) {
+    if (!gameAct) return false; 
+
+    let [sx, sy] = shape.position;
+    let size = shape.size / 200.0; 
+
+    if (shape.type === 'point') {
+        return Math.abs(x - sx) < size && Math.abs(y - sy) < size;
+    } else if (shape.type === 'triangle') {
+        return isPointInTriangle([x, y], [sx, sy], [sx + size, sy], [sx, sy + size]);
+    } else if (shape.type === 'circle') {
+        let dx = x - sx;
+        let dy = y - sy;
+        return Math.sqrt(dx * dx + dy * dy) < size;
+    }
+    return false;
+}
+function isPointInTriangle(p, p0, p1, p2) {
+    if (!gameAct) return false; 
+
+    let area = 0.5 * (-p1[1] * p2[0] + p0[1] * (-p1[0] + p2[0]) + p0[0] * (p1[1] - p2[1]) + p1[0] * p2[1]);
+    let s = 1 / (2 * area) * (p0[1] * p2[0] - p0[0] * p2[1] + (p2[1] - p0[1]) * p[0] + (p0[0] - p2[0]) * p[1]);
+    let t = 1 / (2 * area) * (p0[0] * p1[1] - p0[1] * p1[0] + (p0[1] - p1[1]) * p[0] + (p1[0] - p0[0]) * p[1]);
+    return s > 0 && t > 0 && 1 - s - t > 0;
+}
+
+function genShapes() {
+    if (!gameAct) return false; 
+    return generatedShapesCopy.every(shape => !g_shapesList.includes(shape));
+}
