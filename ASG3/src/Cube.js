@@ -4,6 +4,55 @@ class Cube {
         this.color = [1.0, 1.0, 1.0, 1.0];
         this.matrix = new Matrix4();
         this.textureNum = -1;
+        this.cubeVerts32 = new Float32Array([
+            0, 0, 0,  1, 1, 0,  1, 0, 0,
+            0, 0, 0,  0, 1, 0,  1, 1, 0,
+
+            // Back Face
+            0, 0, 1,  1, 0, 1,  1, 1, 1,
+            0, 0, 1,  0, 1, 1,  1, 1, 1,
+
+            // Top Face
+            0, 1, 0,  0, 1, 1,  1, 1, 1,
+            0, 1, 0,  1, 1, 1,  1, 1, 0,
+
+            // Bottom Face
+            0, 0, 0,  1, 0, 0,  1, 0, 1,
+            0, 0, 0,  1, 0, 1,  0, 0, 1,
+
+            // Left Face
+            0, 0, 0,  0, 1, 0,  0, 1, 1,
+            0, 0, 0,  0, 1, 1,  0, 0, 1,
+
+            // Right Face
+            1, 0, 0,  1, 1, 1,  1, 1, 0,
+            1, 0, 0,  1, 0, 1,  1, 1, 1
+        ]);
+        this.cubeVerts = [ 
+            0, 0, 0,  1, 1, 0,  1, 0, 0,
+            0, 0, 0,  0, 1, 0,  1, 1, 0,
+
+            // Back Face
+            0, 0, 1,  1, 0, 1,  1, 1, 1,
+            0, 0, 1,  0, 1, 1,  1, 1, 1,
+
+            // Top Face
+            0, 1, 0,  0, 1, 1,  1, 1, 1,
+            0, 1, 0,  1, 1, 1,  1, 1, 0,
+
+            // Bottom Face
+            0, 0, 0,  1, 0, 0,  1, 0, 1,
+            0, 0, 0,  1, 0, 1,  0, 0, 1,
+
+            // Left Face
+            0, 0, 0,  0, 1, 0,  0, 1, 1,
+            0, 0, 0,  0, 1, 1,  0, 0, 1,
+
+            // Right Face
+            1, 0, 0,  1, 1, 1,  1, 1, 0,
+            1, 0, 0,  1, 0, 1,  1, 1, 1];
+
+
     }
 
 
@@ -52,7 +101,6 @@ class Cube {
         gl.uniform4f(u_FragColor, rgba[0], rgba[1], rgba[2], rgba[3]);
         gl.uniformMatrix4fv(u_ModelMatrix, false, this.matrix.elements);
 
-        // Define all vertices in a single array (each face is two triangles)
         var allverts = [
             // Front Face
             0, 0, 0,  1, 1, 0,  1, 0, 0,
@@ -79,7 +127,6 @@ class Cube {
             1, 0, 0,  1, 0, 1,  1, 1, 1
         ];
 
-        // Define corresponding UV coordinates (same order as vertices)
         var alluvs = [
             // Front Face
             0, 0,  1, 1,  1, 0,
@@ -106,8 +153,21 @@ class Cube {
             0, 0,  0, 1,  1, 1
         ];
 
-        // Efficiently render the cube with UV mapping
         drawTriangle3DUV(allverts, alluvs);
+    }
+
+    renderfaster() {
+        var rgba = this.color;
+        gl.uniform1i(u_whichTexture, this.textureNum);
+        gl.uniform4f(u_FragColor, rgba[0], rgba[1], rgba[2], rgba[3]);
+        gl.uniformMatrix4fv(u_ModelMatrix, false, this.matrix.elements);
+
+        if (g_vertexBuffer == null) {
+            initTriangle3D();
+
+        }
+
+        gl.bufferData(gl.ARRAY_BUFFER, )
     }
 
 }
