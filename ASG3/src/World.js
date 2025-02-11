@@ -464,7 +464,7 @@ function drawTerrain() {
             let block = new Cube();
             block.color = [0.5, 0.3, 0.1, 1.0];
             block.textureNum = 1;
-            block.matrix.translate(x - (g_terrain[0].length / 2), -0.75 + height * 0.2, z - (g_terrain.length / 2));=
+            block.matrix.translate(x - (g_terrain[0].length / 2), -0.75 + height * 0.2, z - (g_terrain.length / 2));
             block.matrix.scale(1, 0.2, 1);
             block.render();
         }
