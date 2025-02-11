@@ -247,6 +247,9 @@ function main() {
     connectVariablesToGLSL();
     addActionsForHtmlUI();
     initTextures();
+    initTriangle3D(); // Initialize triangle buffers
+    initCubeBuffers(); // Initialize cube buffers
+
 
     document.onkeydown = keydown;
     setupMouseControls();
@@ -254,11 +257,11 @@ function main() {
     document.addEventListener("keydown", (event) => {
         if (event.key === "f") {
             addBlock();
-        } else if (event.key === "g") { 
+        } else if (event.key === "g") {
             removeBlock();
         }
     });
-    
+
 
     // Specify the color for clearing <canvas>
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -274,11 +277,11 @@ function setupMouseControls() {
     let isMouseHeld = false;
     let prevMouseX = null;
     let prevMouseY = null;
-    let mouseSensitivity = 0.2; 
+    let mouseSensitivity = 0.2;
 
     document.addEventListener("mousedown", (event) => {
         isMouseHeld = true;
-        prevMouseX = event.clientX; 
+        prevMouseX = event.clientX;
         prevMouseY = event.clientY;
     });
 
@@ -294,9 +297,9 @@ function setupMouseControls() {
                 let deltaX = event.clientX - prevMouseX;
                 let deltaY = event.clientY - prevMouseY;
 
-                g_yaw += deltaX * mouseSensitivity; 
-                g_pitch -= deltaY * mouseSensitivity; 
-                
+                g_yaw += deltaX * mouseSensitivity;
+                g_pitch -= deltaY * mouseSensitivity;
+
                 g_pitch = Math.max(-89, Math.min(89, g_pitch));
             }
             prevMouseX = event.clientX;
@@ -305,20 +308,20 @@ function setupMouseControls() {
     });
 }
 
-let g_blocks = []; 
+let g_blocks = [];
 
 
 function addBlock() {
     let { x, y, z } = getBlockInFront();
-    
+
     for (let block of g_blocks) {
         if (block.x === x && block.y === y && block.z === z) {
-            return; 
+            return;
         }
     }
 
     let newBlock = new Cube();
-    newBlock.textureNum = 0; 
+    newBlock.textureNum = 0;
     newBlock.matrix.translate(x, y, z);
     newBlock.x = x;
     newBlock.y = y;
@@ -333,7 +336,7 @@ function removeBlock() {
 
     for (let i = 0; i < g_blocks.length; i++) {
         if (g_blocks[i].x === x && g_blocks[i].y === y && g_blocks[i].z === z) {
-            g_blocks.splice(i, 1); 
+            g_blocks.splice(i, 1);
             renderAllShapes();
             return;
         }
@@ -356,11 +359,6 @@ function getBlockInFront() {
 
     return { x: targetX, y: targetY, z: targetZ };
 }
-
-
-
-
-
 
 var g_startTime = performance.now() / 1000.0;
 var g_seconds = performance.now() / 1000.0 - g_startTime;
@@ -394,14 +392,14 @@ function updateAnimationAngles() {
 
 }
 
-let moveSpeed = 0.05; 
-let rotationSpeed = 5; 
+let moveSpeed = 0.05;
+let rotationSpeed = 5;
 
 var g_pitch = 0;
 
-var g_eye = [0, 0, 3];   
-var g_yaw = 0;           
-var g_up = [0, 1, 0];    
+var g_eye = [0, 0, 3];
+var g_yaw = 0;
+var g_up = [0, 1, 0];
 
 function keydown(ev) {
     let radianYaw = (g_yaw * Math.PI) / 180;
@@ -427,15 +425,15 @@ function keydown(ev) {
             g_eye[1] -= forwardY * moveSpeed;
             g_eye[2] -= forwardZ * moveSpeed;
             break;
-        case 'a': case 'A': 
+        case 'a': case 'A':
             g_eye[0] -= rightX * moveSpeed;
             g_eye[2] -= rightZ * moveSpeed;
             break;
-        case 'd': case 'D': 
+        case 'd': case 'D':
             g_eye[0] += rightX * moveSpeed;
             g_eye[2] += rightZ * moveSpeed;
             break;
-        case 'q': case 'Q': 
+        case 'q': case 'Q':
             g_yaw -= rotationSpeed;
             break;
         case 'e': case 'E':
@@ -461,14 +459,14 @@ var g_terrain = [
 function drawTerrain() {
     for (let z = 0; z < g_terrain.length; z++) {
         for (let x = 0; x < g_terrain[z].length; x++) {
-            let height = g_terrain[z][x]; 
+            let height = g_terrain[z][x];
 
             let block = new Cube();
-            block.color = [0.5, 0.3, 0.1, 1.0]; 
-            block.textureNum = 1; 
-            block.matrix.translate(x - (g_terrain[0].length / 2), -0.75 + height * 0.2, z - (g_terrain.length / 2)); // Scale height
-            block.matrix.scale(1, 0.2, 1); 
-            block.renderfast();
+            block.color = [0.5, 0.3, 0.1, 1.0];
+            block.textureNum = 1;
+            block.matrix.translate(x - (g_terrain[0].length / 2), -0.75 + height * 0.2, z - (g_terrain.length / 2));=
+            block.matrix.scale(1, 0.2, 1);
+            block.render();
         }
     }
 }
@@ -511,35 +509,41 @@ var g_map = [
 ];
 
 function drawMap(map, texNum) {
+    let block = new Cube();  // Reuse a single cube instance
+    block.color = [1, 1, 1, 1];
+    block.textureNum = texNum;
+    let tempMatrix = new Matrix4(); // Preallocate matrix
+
     for (let y = 0; y < 32; y++) {
         for (let x = 0; x < 32; x++) {
-            let height = map[y][x]; 
+            let height = map[y][x];
 
-            for (let h = 0; h < height; h++) { 
-                var block = new Cube();
-                block.color = [1, 1, 1, 1]; 
-                block.textureNum = texNum;
-                block.matrix.translate(
+            for (let h = 0; h < height; h++) {
+                tempMatrix.setIdentity();
+                tempMatrix.translate(
                     x - (map[0].length / 2),
-                    -0.75 + (h * 1), 
-                    y - (map.length / 2) 
+                    -0.75 + (h * 1),
+                    y - (map.length / 2)
                 );
-                block.matrix.scale(1, 1, 1);
-                block.renderfast();
+                tempMatrix.scale(1, 1, 1);
+
+                block.matrix.set(tempMatrix);  // Reuse matrix
+                block.render();
             }
         }
     }
 }
 
-function drawCat(x,y,z, scale, rotatex, rotatey, rotatez, tex) {
+
+function drawCat(x, y, z, scale, rotatex, rotatey, rotatez, tex) {
     var body = new Cube();
     body.color = [1, 1, 1, 1];
     body.textureNum = tex;
-    body.matrix.setTranslate(x + -0.3, y + 0 + (scale*0.5), z + -0.3);
+    body.matrix.setTranslate(x + -0.3, y + 0 + (scale * 0.5), z + -0.3);
     body.matrix.rotate(rotatex, rotatey, rotatez, 0);
     body.matrix.scale(0.5 + scale, 0.5 + scale, 1 + scale);
-    var bodyCoordMat = new Matrix4(body.matrix); 
-    body.renderfast();
+    var bodyCoordMat = new Matrix4(body.matrix);
+    body.render();
 
     var tail = new Cube();
     tail.color = [0, 0, 0, 1];
@@ -547,7 +551,7 @@ function drawCat(x,y,z, scale, rotatex, rotatey, rotatez, tex) {
     tail.matrix = new Matrix4(bodyCoordMat);
     tail.matrix.translate(0.35, 0.2 + g_ExpoAngle, 1);
     tail.matrix.scale(0.3, 0.3, 0.3);
-    tail.renderfast();
+    tail.render();
 
     var legF = new Cube();
     legF.color = [0, 0, 0, 1];
@@ -557,7 +561,7 @@ function drawCat(x,y,z, scale, rotatex, rotatey, rotatez, tex) {
     legF.matrix.rotate(-g_walkAngle, 1, 0, 0);
     legF.matrix.translate(0, -0.5, 0);
     legF.matrix.scale(0.3, 1.3, 0.2);
-    legF.renderfast();
+    legF.render();
 
 
     var legB = new Cube();
@@ -569,7 +573,7 @@ function drawCat(x,y,z, scale, rotatex, rotatey, rotatez, tex) {
     legB.matrix.translate(0, -0.5, 0);
     legB.matrix.rotate(0, 1, 0, 0);
     legB.matrix.scale(0.3, 1.2, 0.2);
-    legB.renderfast();
+    legB.render();
 
     var legF2 = new Cube();
     legF2.color = [0, 0, 0, 1];
@@ -579,7 +583,7 @@ function drawCat(x,y,z, scale, rotatex, rotatey, rotatez, tex) {
     legF2.matrix.rotate(g_walkAngle, 1, 0, 0);
     legF2.matrix.translate(0, -0.5, 0);
     legF2.matrix.scale(0.3, 1.3, 0.2);
-    legF2.renderfast();
+    legF2.render();
 
     var legB2 = new Cube();
     legB2.color = [0, 0, 0, 1];
@@ -590,7 +594,7 @@ function drawCat(x,y,z, scale, rotatex, rotatey, rotatez, tex) {
     legB2.matrix.translate(0, -0.5, 0);
     legB2.matrix.rotate(0, 1, 0, 0);
     legB2.matrix.scale(0.3, 1.2, 0.2);
-    legB2.renderfast();
+    legB2.render();
 
     var head = new Cube();
     head.color = [0, 0, 0, 1];
@@ -600,7 +604,7 @@ function drawCat(x,y,z, scale, rotatex, rotatey, rotatez, tex) {
     head.matrix.rotate(g_headRotAngle, 0, 0);
     head.matrix.scale(1, 1, 0.5);
     var headCoordMat = new Matrix4(head.matrix);
-    head.renderfast();
+    head.render();
 
 
 
@@ -611,7 +615,7 @@ function drawCat(x,y,z, scale, rotatex, rotatey, rotatez, tex) {
     earL.textureNum = tex;
     earL.matrix.translate(0.1 - g_ExpoAngle, 0.83 + g_ExpoAngle, 0.5);
     earL.matrix.scale(0.3, 0.4, 0.4);
-    earL.renderfast();
+    earL.render();
 
     var earR = new Cube();
     earR.color = [1, 1, 1, 1];
@@ -619,7 +623,7 @@ function drawCat(x,y,z, scale, rotatex, rotatey, rotatez, tex) {
     earR.textureNum = tex;
     earR.matrix.translate(0.6 + g_ExpoAngle, 0.83 + g_ExpoAngle, 0.5);
     earR.matrix.scale(0.3, 0.4, 0.4);
-    earR.renderfast();
+    earR.render();
 
     var eyeL = new Cube();
     eyeL.color = [1, 1, 0, 1];
@@ -627,7 +631,7 @@ function drawCat(x,y,z, scale, rotatex, rotatey, rotatez, tex) {
     eyeL.textureNum = tex;
     eyeL.matrix.translate(0.2 - g_ExpoAngle, 0.6, -0.1);
     eyeL.matrix.scale(0.2, 0.2, 0.4);
-    eyeL.renderfast();
+    eyeL.render();
 
     var eyeR = new Cube();
     eyeR.color = [1, 1, 0, 1];
@@ -635,7 +639,7 @@ function drawCat(x,y,z, scale, rotatex, rotatey, rotatez, tex) {
     eyeR.textureNum = tex;
     eyeR.matrix.translate(0.6 + g_ExpoAngle, 0.6, -0.1);
     eyeR.matrix.scale(0.2, 0.2, 0.4);
-    eyeR.renderfast();
+    eyeR.render();
 
     var mouth = new Cube();
     mouth.color = [1, 0, 0.83, 1];
@@ -644,7 +648,7 @@ function drawCat(x,y,z, scale, rotatex, rotatey, rotatez, tex) {
     mouth.matrix.translate(0.2, 0.2, -0.2);
     mouth.matrix.scale(0.6, 0.4, 0.2);
     var MouthCoordMat = new Matrix4(mouth.matrix);
-    mouth.renderfast();
+    mouth.render();
 
     var tounge = new Cube();
     tounge.color = [1, 1, 0, 1];
@@ -652,23 +656,23 @@ function drawCat(x,y,z, scale, rotatex, rotatey, rotatez, tex) {
     tounge.textureNum = tex;
     tounge.matrix.translate(0.25, 0, -0.2 - g_toungeAngle);
     tounge.matrix.scale(0.5, 0.2, 1);
-    tounge.renderfast();
+    tounge.render();
 }
 
 
 
 function renderAllShapes() {
-    var startTime = performance.now();
+    let startTime = performance.now();
 
-    var projMat = new Matrix4();
+    let projMat = new Matrix4();
     projMat.setPerspective(50, canvas.width / canvas.height, 1, 100);
     gl.uniformMatrix4fv(u_ProjectionMatrix, false, projMat.elements);
 
-    var viewMat = new Matrix4();
+    let viewMat = new Matrix4();
+    let globalRotMat = new Matrix4();
 
     let radianYaw = (g_yaw * Math.PI) / 180;
     let radianPitch = (g_pitch * Math.PI) / 180;
-
     let forwardX = Math.cos(radianPitch) * Math.sin(radianYaw);
     let forwardY = Math.sin(radianPitch);
     let forwardZ = -Math.cos(radianPitch) * Math.cos(radianYaw);
@@ -680,54 +684,46 @@ function renderAllShapes() {
     viewMat.setLookAt(g_eye[0], g_eye[1], g_eye[2], atX, atY, atZ, g_up[0], g_up[1], g_up[2]);
     gl.uniformMatrix4fv(u_ViewMatrix, false, viewMat.elements);
 
-    var globalRotMat = new Matrix4();
     globalRotMat.setIdentity();
     globalRotMat.rotate(g_globalAngle, 0, 1, 0);
     globalRotMat.rotate(g_globalXAngle, 1, 0, 0);
     globalRotMat.rotate(g_globalYAngle, 0, 1, 0);
-
     gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, globalRotMat.elements);
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    gl.clear(gl.COLOR_BUFFER_BIT);
 
     for (let block of g_blocks) {
-        block.renderfast();
+        block.render();
     }
 
-    // drawTriangle( [-1.0,0.0,0.0,    -0.5,-1.0,0.0,  0.0,0.0,0.0] );
-
     drawMap(g_map, 1);
-    //drawMap(g_house, 0);
+    drawCat(2, 0, 5, 1, 0, 1, 0, -2);
+    drawCat(0, 0, 5, 1, 0, 1, 0, -2);
+    drawCat(-2, 0, 5, 1, 0, 1, 0, -2);
+    drawCat(0, 0, -5, 2, 180, 0, 1, 0);
 
-    drawCat(2,0,5, 1, 0, 1, 0, -2);
-    drawCat(0,0,5, 1, 0, 1, 0, -2);
-    drawCat(-2,0,5, 1, 0, 1, 0, -2);
-
-    drawCat(0,0,-5, 2, 180, 0, 1, 0);
-
-    var sky = new Cube();
+    let sky = new Cube();
     sky.color = [0.376, 0.419, 0.812, 1.0];
-    sky.textureNum=-2;
-    sky.matrix.translate(0, -.75, 0.0);
-    sky.matrix.scale(50,50,50);
-    sky.matrix.translate(-.5, -.5, -0.5);
-    sky.renderfast();
+    sky.textureNum = -2;
+    sky.matrix.setIdentity();
+    sky.matrix.translate(0, -0.75, 0.0);
+    sky.matrix.scale(50, 50, 50);
+    sky.matrix.translate(-0.5, -0.5, -0.5);
+    sky.render();
 
-
-    var floor = new Cube();
+    let floor = new Cube();
     floor.color = [0.553, 0.733, 0.322, 1.0];
-    floor.textureNum=-2;
-    floor.matrix.translate(0, -.75, 0.0);
-    floor.matrix.scale(32,0,32);
-    floor.matrix.translate(-.5, 0, -0.5);
-    floor.renderfast();
+    floor.textureNum = -2;
+    floor.matrix.setIdentity();
+    floor.matrix.translate(0, -0.75, 0.0);
+    floor.matrix.scale(32, 0, 32);
+    floor.matrix.translate(-0.5, 0, -0.5);
+    floor.render();
 
-
-    var duration = performance.now() - startTime;
+    let duration = performance.now() - startTime;
     sendTextToHTML(" ms: " + Math.floor(duration) + " fps: " + Math.floor(10000 / duration) / 10, "numdot");
-
 }
+
 
 function sendTextToHTML(text, htmlID) {
     var htmlElm = document.getElementById(htmlID);
