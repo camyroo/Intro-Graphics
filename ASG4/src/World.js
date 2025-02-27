@@ -36,14 +36,13 @@ var FSHADER_SOURCE = `
     uniform int u_whichTexture;
     uniform bool u_showNormals;
     uniform bool u_useLighting;
-
-    uniform vec3 u_lightDir;  
-    uniform float u_cutoffAngle; 
-    uniform float u_spotExponent; 
-
-
+    
     uniform vec3 u_lightPos;
-    uniform vec3 u_cameraPos;   
+    uniform vec3 u_cameraPos;
+
+
+    uniform vec3 u_lightColor;
+
 
     void main() {   
         vec4 textureColor;
@@ -76,9 +75,10 @@ var FSHADER_SOURCE = `
             vec3 E = normalize(u_cameraPos - vec3(v_VertPos));
             float specular = pow(max(dot(E, R), 0.0), 32.0);
 
-            vec3 diffuse = vec3(textureColor) * nDotL * 0.7;
-            vec3 ambient = vec3(textureColor) * 0.3;
-            vec3 specularColor = vec3(1.0, 1.0, 1.0) * specular;
+            vec3 diffuse = vec3(textureColor) * u_lightColor * nDotL * 0.7;
+            vec3 ambient = vec3(textureColor) * u_lightColor * 0.3;
+            vec3 specularColor = u_lightColor * specular;
+
 
             vec3 finalLitColor = ambient + diffuse + specularColor;
 
@@ -110,7 +110,9 @@ let u_showNormals;
 let u_lightPos;
 
 let u_useLighting;
-let u_lightDir, u_cutoffAngle, u_spotExponent;
+let g_lightColor = [1.0, 1.0, 1.0];
+let u_lightColor;
+
 
 
 
@@ -231,13 +233,14 @@ function connectVariablesToGLSL() {
         return;
     }
 
-    u_lightDir = gl.getUniformLocation(gl.program, 'u_lightDir');
-    u_cutoffAngle = gl.getUniformLocation(gl.program, 'u_cutoffAngle');
-    u_spotExponent = gl.getUniformLocation(gl.program, 'u_spotExponent');
-    if (!u_lightDir || !u_cutoffAngle || !u_spotExponent) {
-        console.log("Failed to get spotlight uniforms");
+    u_lightColor = gl.getUniformLocation(gl.program, 'u_lightColor');
+    if (!u_lightColor) {
+        console.log('Failed to get u_lightColor');
         return;
     }
+    gl.uniform3f(u_lightColor, g_lightColor[0], g_lightColor[1], g_lightColor[2]);
+
+
 
     var identityM = new Matrix4();
     gl.uniformMatrix4fv(u_ModelMatrix, false, identityM.elements);
@@ -312,6 +315,25 @@ function addActionsForHtmlUI() {
         g_useLighting = !g_useLighting;
         renderAllShapes();
     };
+
+    document.getElementById('lightColorR').addEventListener('input', function () {
+        g_lightColor[0] = this.value / 255.0;
+        updateLightColor();
+    });
+    document.getElementById('lightColorG').addEventListener('input', function () {
+        g_lightColor[1] = this.value / 255.0;
+        updateLightColor();
+    });
+    document.getElementById('lightColorB').addEventListener('input', function () {
+        g_lightColor[2] = this.value / 255.0;
+        updateLightColor();
+    });
+
+    function updateLightColor() {
+        gl.uniform3f(u_lightColor, g_lightColor[0], g_lightColor[1], g_lightColor[2]);
+        renderAllShapes();
+    }
+
 
     canvas.onmousemove = function (ev) { if (ev.buttons == 1) { click(ev) } };
 }
@@ -819,10 +841,6 @@ function renderAllShapes() {
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.uniform1i(u_useLighting, g_useLighting ? 1 : 0);
-    gl.uniform3f(u_lightDir, 0.0, -1.0, -1.0); 
-    gl.uniform1f(u_cutoffAngle, 15.0); 
-    gl.uniform1f(u_spotExponent, 10.0); 
-
     gl.uniform1i(u_showNormals, showNormals);
 
     for (let block of g_blocks) {
@@ -872,14 +890,6 @@ function renderAllShapes() {
     light.matrix.scale(-.1, -.1, -.1);
     light.matrix.translate(-.5, -.5, -.5);
     light.render();
-
-    var spotlight = new Cube();
-    spotlight.color = [1, 1, 0, 1]; 
-    spotlight.textureNum = -2;
-    spotlight.matrix.translate(0, 1, 0);
-    spotlight.matrix.scale(0.2, 0.2, 0.2);
-    spotlight.render();
-
 
 
     let sphere = new Sphere();
