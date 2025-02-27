@@ -56,3 +56,28 @@ function drawTriangle3DUV(vertices, uv) {
 
     gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 3);
 }
+
+let g_normalBuffer = null;
+
+function drawTriangle3DUVNormal(vertices, uv, normals) {
+    if (!g_vertexBuffer) g_vertexBuffer = gl.createBuffer();
+    if (!g_uvBuffer) g_uvBuffer = gl.createBuffer();
+    if (!g_normalBuffer) g_normalBuffer = gl.createBuffer();
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, g_vertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+    gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_Position);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, g_uvBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(uv), gl.STATIC_DRAW);
+    gl.vertexAttribPointer(a_UV, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_UV);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, g_normalBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
+    gl.vertexAttribPointer(a_Normal, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_Normal);
+
+    gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 3);
+}

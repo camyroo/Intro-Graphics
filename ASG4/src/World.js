@@ -26,95 +26,68 @@ var VSHADER_SOURCE = `
 
 // Fragment shader program
 var FSHADER_SOURCE = `
-precision mediump float;
+    precision mediump float;
+    varying vec3 v_Normal;
+    varying vec2 v_UV;
+    varying vec4 v_VertPos;
+    uniform vec4 u_FragColor;
+    uniform sampler2D u_Sampler0;
+    uniform sampler2D u_Sampler1;
+    uniform int u_whichTexture;
+    uniform bool u_showNormals;
+    uniform bool u_useLighting;
 
-// Varying variables from the vertex shader
-varying vec3 v_Normal;
-varying vec2 v_UV;
-varying vec4 v_VertPos;
+    uniform vec3 u_lightDir;  
+    uniform float u_cutoffAngle; 
+    uniform float u_spotExponent; 
 
-// Uniforms
-uniform vec4 u_FragColor;
-uniform sampler2D u_Sampler0;
-uniform sampler2D u_Sampler1;
-uniform int u_whichTexture;
-uniform bool u_showNormals;
-uniform bool u_useLighting;
 
-// Point Light Uniforms
-uniform vec3 u_lightColor;  // Light color
-uniform vec3 u_lightPos;    // Light position
+    uniform vec3 u_lightPos;
+    uniform vec3 u_cameraPos;   
 
-// Spotlight Uniforms
-uniform vec3 u_lightDir;    // Spotlight direction
-uniform float u_cutoffAngle; // Spotlight cutoff angle (in degrees)
-uniform float u_spotExponent; // Spotlight intensity factor
+    void main() {   
+        vec4 textureColor;
+        if(u_whichTexture == -3) {
+         gl_FragColor = vec4((v_Normal+1.0)/2.0, 1.0);
+        }
+        else if (u_whichTexture == -2) {
+            textureColor = u_FragColor;
+        } else if (u_whichTexture == -1) {
+            textureColor = vec4(v_UV, 1.0, 1.0);        
+        } else if (u_whichTexture == 0) {
+            textureColor = texture2D(u_Sampler0, v_UV);     
+        } else if (u_whichTexture == 1) {
+            textureColor = texture2D(u_Sampler1, v_UV);     
+        } else {
+            textureColor = vec4(1, .2, .2, 1); 
+        }
 
-// Camera position
-uniform vec3 u_cameraPos;
+        if (u_showNormals) {
+            gl_FragColor = vec4(v_Normal * 0.5 + 0.5, 1.0);
+        } else {
+            vec3 lightVector = normalize(u_lightPos - vec3(v_VertPos));
+            float distance = length(u_lightPos - vec3(v_VertPos));
 
-void main() {   
-    // Normal Visualization Mode
-    if (u_showNormals) {
-        gl_FragColor = vec4(v_Normal * 0.5 + 0.5, 1.0);
-        return;
-    }
+            vec3 N = normalize(v_Normal);
+            vec3 L = normalize(lightVector);
+            float nDotL = max(dot(N, L), 0.0);
 
-    // Texture Selection
-    vec4 textureColor;
-    if (u_whichTexture == -2) {
-        textureColor = u_FragColor;
-    } else if (u_whichTexture == -1) {
-        textureColor = vec4(v_UV, 1.0, 1.0);
-    } else if (u_whichTexture == 0) {
-        textureColor = texture2D(u_Sampler0, v_UV);
-    } else if (u_whichTexture == 1) {
-        textureColor = texture2D(u_Sampler1, v_UV);
-    } else {
-        textureColor = vec4(1, 0.2, 0.2, 1);
-    }
+            vec3 R = reflect(-L, N);
+            vec3 E = normalize(u_cameraPos - vec3(v_VertPos));
+            float specular = pow(max(dot(E, R), 0.0), 32.0);
 
-    // If lighting is disabled, return texture color
-    if (!u_useLighting) {
-        gl_FragColor = textureColor;
-        return;
-    }
+            vec3 diffuse = vec3(textureColor) * nDotL * 0.7;
+            vec3 ambient = vec3(textureColor) * 0.3;
+            vec3 specularColor = vec3(1.0, 1.0, 1.0) * specular;
 
-    // Compute normalized vectors
-    vec3 L = normalize(u_lightPos - vec3(v_VertPos)); // Light direction
-    vec3 N = normalize(v_Normal); // Normal at fragment
-    vec3 V = normalize(u_cameraPos - vec3(v_VertPos)); // View direction (from fragment to camera)
+            vec3 finalLitColor = ambient + diffuse + specularColor;
 
-    // Diffuse Lighting
-    float nDotL = max(dot(N, L), 0.0);
-    vec3 diffuse = vec3(textureColor) * nDotL * 0.7 * u_lightColor;
+            // **NEW: Blend between lit and unlit based on u_useLighting**
+            vec3 finalColor = mix(vec3(textureColor), finalLitColor, float(u_useLighting));
 
-    // Specular Lighting (Phong Reflection)
-    vec3 R = reflect(-L, N);
-    float specularStrength = pow(max(dot(V, R), 0.0), 32.0);
-    vec3 specular = u_lightColor * specularStrength;
-
-    // Ambient Lighting
-    vec3 ambient = vec3(textureColor) * 0.3;
-
-    // Spotlight Effect
-    float spotIntensity = 1.0; // Default to full brightness
-    vec3 lightDirection = normalize(-u_lightDir); // Spotlight direction
-    float spotAngle = dot(L, lightDirection); // Angle between light and spotlight direction
-
-    float cutoff = cos(radians(u_cutoffAngle)); // Convert cutoff angle to cosine
-    if (spotAngle < cutoff) {
-        spotIntensity = 0.0; // Outside the spotlight, no light
-    } else {
-        float factor = pow(spotAngle, u_spotExponent); // Control the spotlight intensity
-        spotIntensity *= factor;
-    }
-
-    // Final lighting calculation with spotlight effect
-    vec3 finalColor = ambient + (diffuse + specular) * spotIntensity;
-    gl_FragColor = vec4(finalColor, textureColor.a);
-}
-`;
+            gl_FragColor = vec4(finalColor, 1.0);
+        }
+    }`;
 
 
 //Global Variables
