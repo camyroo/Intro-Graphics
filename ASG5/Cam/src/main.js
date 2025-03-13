@@ -1,8 +1,8 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
-import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
-import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
+import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js';
 
 // Renderer
@@ -159,7 +159,7 @@ const pmremGenerator = new THREE.PMREMGenerator(renderer);
 pmremGenerator.compileEquirectangularShader();
 
 const exrLoader = new EXRLoader();
-exrLoader.load('resources/images/sky2.exr', function(texture) {
+exrLoader.load('./resources/images/sky2.exr', function(texture) {
     const envMap = pmremGenerator.fromEquirectangular(texture).texture;
     
     scene.background = envMap; 
