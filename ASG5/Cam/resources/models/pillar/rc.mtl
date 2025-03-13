@@ -1,0 +1,12 @@
+# Blender 4.3.2 MTL File: 'roman_column.blend'
+# www.blender.org
+
+newmtl bronze_columna
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.774270 0.702509 0.616505
+Ks 0.852941 0.852941 0.852941
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
