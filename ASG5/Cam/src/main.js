@@ -2,14 +2,14 @@
 
 // used chatgpt to generate solutions and refactor my code for adding shadows to objects, gui helpers,
 // exr loading optimization, mtl loader forloops, syntax and error checking.  
-import * as THREE from 'three';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@latest/build/three.module.js';
+import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@latest/examples/jsm/controls/OrbitControls.js';
+import { OBJLoader } from 'https://cdn.jsdelivr.net/npm/three@latest/examples/jsm/loaders/OBJLoader.js';
+import { MTLLoader } from 'https://cdn.jsdelivr.net/npm/three@latest/examples/jsm/loaders/MTLLoader.js';
+import { GUI } from 'https://cdn.jsdelivr.net/npm/three@latest/examples/jsm/libs/lil-gui.module.min.js';
+import { EXRLoader } from 'https://cdn.jsdelivr.net/npm/three@latest/examples/jsm/loaders/EXRLoader.js';
 
 
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
-import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
-import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
-import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js';
 
 
 // Renderer
