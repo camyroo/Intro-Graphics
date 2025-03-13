@@ -2,14 +2,15 @@
 
 // used chatgpt to generate solutions and refactor my code for adding shadows to objects, gui helpers,
 // exr loading optimization, mtl loader forloops, syntax and error checking.  
-
-
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
-import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
-import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
+import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js';
+
 
 // Renderer
 const canvas = document.querySelector('#c');
@@ -80,9 +81,10 @@ class FogGUIHelper {
     return `#${this.fog.color.getHexString()}`;
   }
   set color(hexString) {
-    this.fog.color.set(hexString);cons
+    this.fog.color.set(hexString);
     this.backgroundColor.set(hexString);
-  }
+}
+
 }
 
 const fogGUIHelper = new FogGUIHelper(scene.fog, scene.background);
@@ -165,7 +167,7 @@ const pmremGenerator = new THREE.PMREMGenerator(renderer);
 pmremGenerator.compileEquirectangularShader();
 
 const exrLoader = new EXRLoader();
-exrLoader.load('resources/images/sky2.exr', function(texture) {
+exrLoader.load('./resources/images/sky2.exr', function(texture) {
     const envMap = pmremGenerator.fromEquirectangular(texture).texture;
     
     scene.background = envMap; 
