@@ -1,3 +1,9 @@
+// NOTE TO GRADER
+
+// used chatgpt to generate solutions and refactor my code for adding shadows to objects, gui helpers,
+// exr loading optimization, mtl loader forloops, syntax and error checking.  
+
+
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
